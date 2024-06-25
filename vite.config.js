@@ -3,7 +3,6 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-//hhh
 export default defineConfig({
   plugins: [
     vue(),
@@ -18,8 +17,8 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      // 键值对的形式将请求代理到不同的目标服务器
-      '/test': {
+      // 将请求代理到Spring Boot后端
+      '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
         secure: false,
