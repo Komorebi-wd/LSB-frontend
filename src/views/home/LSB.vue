@@ -10,6 +10,10 @@
       </div>
     </header>
     <div class="top-info">
+      <div class="key-area">
+        <input v-model="encryptionKey" placeholder="输入16位密钥" maxlength="16">
+        <button @click="generateRandomKey">生成随机密钥</button>
+      </div>
       可嵌入信息的最大长度：{{ maxEmbeddableLength }} 字节
     </div>
     <main>
@@ -38,6 +42,7 @@ const originalImage = ref(null);
 const modifiedImage = ref(null);
 const message = ref('');
 const maxEmbeddableLength = ref(0);
+const encryptionKey = ref('');
 let originalFile = null;
 
 function loadImage() {
@@ -73,14 +78,15 @@ function calculateMaxEmbeddableLength(file) {
 }
 
 function embedData() {
-  if (!originalFile || !message.value) {
-    alert('请先选择图片并输入要嵌入的信息');
+  if (!originalFile || !message.value || encryptionKey.value.length !== 16) {
+    alert('请先选择图片并输入要嵌入的信息和16位密钥');
     return;
   }
 
   const formData = new FormData();
   formData.append('image', originalFile);
   formData.append('message', message.value);
+  formData.append('key', encryptionKey.value);
 
   axios.post('/api/lsb/embed', formData)
       .then(response => {
@@ -106,13 +112,14 @@ function saveImage() {
 }
 
 function extractData() {
-  if (!originalFile) {
-    alert('请先选择嵌入了信息的图片');
+  if (!originalFile || encryptionKey.value.length !== 16) {
+    alert('请先选择嵌入了信息的图片并输入正确的16位密钥');
     return;
   }
 
   const formData = new FormData();
   formData.append('image', originalFile);
+  formData.append('key', encryptionKey.value);
 
   axios.post('/api/lsb/extract', formData)
       .then(response => {
@@ -121,6 +128,15 @@ function extractData() {
       .catch(error => {
         console.error('Error extracting data:', error);
       });
+}
+
+function generateRandomKey() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 16; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  encryptionKey.value = result;
 }
 </script>
 
@@ -150,6 +166,26 @@ function extractData() {
     margin: 20px 0;
     font-size: 16px;
     color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .key-area {
+      display: flex;
+      align-items: center;
+      margin-right: 20px;
+
+      input {
+        width: 200px;
+        padding: 5px;
+        margin-right: 10px;
+      }
+
+      button {
+        padding: 5px 10px;
+        cursor: pointer;
+      }
+    }
   }
 
   .images {
