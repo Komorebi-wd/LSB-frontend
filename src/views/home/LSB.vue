@@ -78,11 +78,22 @@ function calculateMaxEmbeddableLength(file) {
 }
 
 function embedData() {
-  if (!originalFile || !message.value || encryptionKey.value.length !== 16) {
-    alert('请先选择图片并输入要嵌入的信息和16位密钥');
+  if (!originalFile ) {
+    alert('请先选择图片');
     return;
   }
-
+  if (!message.value) {
+    alert('请输入要嵌入的信息');
+    return;
+  }
+  if (message.value.length > maxEmbeddableLength.value) {
+    alert('信息太长，无法嵌入到图片中');
+    return;
+  }
+  if(encryptionKey.value.length !== 16){
+    alert('请输入16位密钥');
+    return;
+  }
   const formData = new FormData();
   formData.append('image', originalFile);
   formData.append('message', message.value);
@@ -112,8 +123,12 @@ function saveImage() {
 }
 
 function extractData() {
-  if (!originalFile || encryptionKey.value.length !== 16) {
-    alert('请先选择嵌入了信息的图片并输入正确的16位密钥');
+  if (!originalFile) {
+    alert('请先选择嵌入了信息的图片');
+    return;
+  }
+  if(encryptionKey.value.length !== 16){
+    alert('请输入16位密钥');
     return;
   }
 
@@ -126,7 +141,8 @@ function extractData() {
         message.value = response.data;
       })
       .catch(error => {
-        console.error('Error extracting data:', error);
+        // console.error('Error extracting data:', error);
+        alert('提取信息失败，请检查密钥是否正确');
       });
 }
 
