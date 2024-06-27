@@ -9,11 +9,14 @@
         <button @click="extractData">提取</button>
       </div>
     </header>
-    <div class="top-info">
+    <div class="top-info" v-if="useKey">
       <div class="key-area">
         <input v-model="encryptionKey" placeholder="输入16位密钥" maxlength="16">
         <button @click="generateRandomKey">生成随机密钥</button>
       </div>
+      可嵌入信息的最大长度：{{ maxEmbeddableLength }} 字节
+    </div>
+    <div class="top-info" v-else>
       可嵌入信息的最大长度：{{ maxEmbeddableLength }} 字节
     </div>
     <main>
@@ -43,6 +46,7 @@ const modifiedImage = ref(null);
 const message = ref('');
 const maxEmbeddableLength = ref(0);
 const encryptionKey = ref('');
+const useKey = ref(false);
 let originalFile = null;
 
 function loadImage() {
@@ -56,7 +60,7 @@ function loadImage() {
       reader.onload = (e) => {
         originalImage.value = e.target.result;
         originalFile = file;
-        calculateMaxEmbeddableLength(file);
+        showKeyOptionDialog();
       };
       reader.readAsDataURL(file);
     }
@@ -64,11 +68,19 @@ function loadImage() {
   input.click();
 }
 
-function calculateMaxEmbeddableLength(file) {
+function showKeyOptionDialog() {
+  const useKeyChoice = confirm("是否使用密钥进行信息嵌入和提取？");
+  useKey.value = useKeyChoice;
+  calculateMaxEmbeddableLength(originalFile, useKeyChoice);
+}
+
+function calculateMaxEmbeddableLength(file, useKey) {
   const formData = new FormData();
   formData.append('image', file);
 
-  axios.post('/api/lsb/upload', formData)
+  const url = useKey ? '/api/lsb/uploadWithKey' : '/api/lsb/upload';
+
+  axios.post(url, formData)
       .then(response => {
         maxEmbeddableLength.value = response.data;
       })
@@ -78,7 +90,7 @@ function calculateMaxEmbeddableLength(file) {
 }
 
 function embedData() {
-  if (!originalFile ) {
+  if (!originalFile) {
     alert('请先选择图片');
     return;
   }
@@ -90,16 +102,21 @@ function embedData() {
     alert('信息太长，无法嵌入到图片中');
     return;
   }
-  if(encryptionKey.value.length !== 16){
+  if (useKey.value && encryptionKey.value.length !== 16) {
     alert('请输入16位密钥');
     return;
   }
+
   const formData = new FormData();
   formData.append('image', originalFile);
   formData.append('message', message.value);
-  formData.append('key', encryptionKey.value);
+  if (useKey.value) {
+    formData.append('key', encryptionKey.value);
+  }
 
-  axios.post('/api/lsb/embed', formData)
+  const url = useKey.value ? '/api/lsb/embedWithKey' : '/api/lsb/embed';
+
+  axios.post(url, formData)
       .then(response => {
         modifiedImage.value = `data:image/bmp;base64,${response.data}`;
       })
@@ -127,21 +144,24 @@ function extractData() {
     alert('请先选择嵌入了信息的图片');
     return;
   }
-  if(encryptionKey.value.length !== 16){
+  if (useKey.value && encryptionKey.value.length !== 16) {
     alert('请输入16位密钥');
     return;
   }
 
   const formData = new FormData();
   formData.append('image', originalFile);
-  formData.append('key', encryptionKey.value);
+  if (useKey.value) {
+    formData.append('key', encryptionKey.value);
+  }
 
-  axios.post('/api/lsb/extract', formData)
+  const url = useKey.value ? '/api/lsb/extractWithKey' : '/api/lsb/extract';
+
+  axios.post(url, formData)
       .then(response => {
         message.value = response.data;
       })
       .catch(error => {
-        // console.error('Error extracting data:', error);
         alert('提取信息失败，请检查密钥是否正确');
       });
 }
