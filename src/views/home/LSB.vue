@@ -7,6 +7,7 @@
         <button @click="embedData">嵌入</button>
         <button @click="saveImage">存储图片</button>
         <button @click="extractData">提取</button>
+        <button @click="addNoise">添加高斯噪声</button>
       </div>
     </header>
     <div class="top-info" v-if="useKey">
@@ -81,12 +82,12 @@ function calculateMaxEmbeddableLength(file, useKey) {
   const url = useKey ? '/api/lsb/uploadWithKey' : '/api/lsb/upload';
 
   axios.post(url, formData)
-      .then(response => {
-        maxEmbeddableLength.value = response.data;
-      })
-      .catch(error => {
-        console.error('Error calculating max embeddable length:', error);
-      });
+    .then(response => {
+      maxEmbeddableLength.value = response.data;
+    })
+    .catch(error => {
+      console.error('Error calculating max embeddable length:', error);
+    });
 }
 
 function embedData() {
@@ -117,12 +118,12 @@ function embedData() {
   const url = useKey.value ? '/api/lsb/embedWithKey' : '/api/lsb/embed';
 
   axios.post(url, formData)
-      .then(response => {
-        modifiedImage.value = `data:image/bmp;base64,${response.data}`;
-      })
-      .catch(error => {
-        console.error('Error embedding data:', error);
-      });
+    .then(response => {
+      modifiedImage.value = `data:image/bmp;base64,${response.data}`;
+    })
+    .catch(error => {
+      console.error('Error embedding data:', error);
+    });
 }
 
 function saveImage() {
@@ -158,12 +159,12 @@ function extractData() {
   const url = useKey.value ? '/api/lsb/extractWithKey' : '/api/lsb/extract';
 
   axios.post(url, formData)
-      .then(response => {
-        message.value = response.data;
-      })
-      .catch(error => {
-        alert('提取信息失败，请检查密钥是否正确');
-      });
+    .then(response => {
+      message.value = response.data;
+    })
+    .catch(error => {
+      alert('提取信息失败，请检查密钥是否正确');
+    });
 }
 
 function generateRandomKey() {
@@ -173,6 +174,24 @@ function generateRandomKey() {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   encryptionKey.value = result;
+}
+
+function addNoise() {
+  if (!originalFile) {
+    alert('请先选择需要添加噪声的图片');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('image', originalFile);
+
+  axios.post('/api/lsb/noise', formData)
+    .then(response => {
+      modifiedImage.value = `data:image/bmp;base64,${response.data}`;
+    })
+    .catch(error => {
+      console.error('Error adding noise data:', error);
+    });
 }
 </script>
 
@@ -249,6 +268,7 @@ function generateRandomKey() {
 
   .input-area {
     margin-top: 20px;
+
     textarea {
       width: 90%;
       height: 100px;
