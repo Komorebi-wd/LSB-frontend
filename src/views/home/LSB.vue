@@ -27,7 +27,8 @@
           <img v-if="originalImage" :src="originalImage" alt="原始图片">
         </div>
         <div class="image-container">
-          <h3>嵌入信息后的图片</h3>
+          <h3 v-if="!useNoise">嵌入信息后的图片</h3>
+          <h3 v-else>添加噪声后的图片</h3>
           <img v-if="modifiedImage" :src="modifiedImage" alt="修改后的图片">
         </div>
       </div>
@@ -48,6 +49,7 @@ const message = ref('');
 const maxEmbeddableLength = ref(0);
 const encryptionKey = ref('');
 const useKey = ref(false);
+const useNoise = ref(false);
 let originalFile = null;
 
 function loadImage() {
@@ -119,6 +121,7 @@ function embedData() {
 
   axios.post(url, formData)
     .then(response => {
+      useNoise.value = false;
       modifiedImage.value = `data:image/bmp;base64,${response.data}`;
     })
     .catch(error => {
@@ -187,6 +190,7 @@ function addNoise() {
 
   axios.post('/api/lsb/noise', formData)
     .then(response => {
+      useNoise.value = true;
       modifiedImage.value = `data:image/bmp;base64,${response.data}`;
     })
     .catch(error => {
